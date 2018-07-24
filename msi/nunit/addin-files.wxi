@@ -40,6 +40,8 @@
             <Component Id="NUNIT.V2.DRIVER" Location="local" Guid="4A55D836-7719-40A2-BDFF-CE3980FE3B42">
                 <File Id="nunit.v2.driver.dll"
                       Source="$(var.InstallImage)bin/addins/nunit.v2.driver.dll" />
+                <File Id="nunit.framework.dll"
+                      Source="$(var.InstallImage)bin/addins/nunit.framework.dll" />
             </Component>
             <Component Id="NUNIT.2.CORE" Location="local" Guid="3D13540C-83E0-463A-8FD1-BE2A3248E2EC">
                 <File Id="nunit.core.dll"

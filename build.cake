@@ -477,6 +477,8 @@ Task("CreateCombinedImage")
 
     foreach(var packageDir in GetAllDirectories(EXTENSION_PACKAGES_DIR))
         CopyPackageContents(packageDir, addinsImgDir);
+
+    NUnit2DriverHack();
 });
 
 Task("PackageMsi")
@@ -604,6 +606,18 @@ public void CopyPackageContents(DirectoryPath packageDir, DirectoryPath outDir)
 {
     var files = GetFiles(packageDir + "/tools/*");
     CopyFiles(files.Where(f => f.GetExtension() != ".addins"), outDir);
+}
+
+public void NUnit2DriverHack()
+{
+    var addinsImgDir = CURRENT_IMG_BIN_DIR + "addins/";
+    var hackDir = PROJECT_DIR + "hack/";
+    NuGetInstall("NUnit", new NuGetInstallSettings {
+                    OutputDirectory = hackDir,
+                    Source = PACKAGE_SOURCE,
+                    Version = "2.6.7"
+                });
+    CopyFileToDirectory(hackDir + "NUnit.2.6.7/lib/nunit.framework.dll", addinsImgDir);
 }
 
 //////////////////////////////////////////////////////////////////////
