@@ -213,6 +213,9 @@ namespace NUnit.ConsoleRunner
                 {
                     var eventHandler = new TestEventHandler(output, labels);
 
+                    if (Environment.GetEnvironmentVariable("BATT_PID") != null)
+                        runner.Load();
+
                     result = runner.Run(eventHandler, filter);
                 }
             }
