@@ -12,7 +12,7 @@ bool IsDotNetCoreInstalled = false;
 // SET PACKAGE VERSION
 //////////////////////////////////////////////////////////////////////
 
-var version = "3.9.0";
+var version = "3.8.2";
 var modifier = "";
 
 var isAppveyor = BuildSystem.IsRunningOnAppVeyor;
@@ -50,7 +50,8 @@ var DOTNETCORE_TEST_ASSEMBLY = "src/NUnitEngine/nunit.engine.tests.netstandard/b
 var PACKAGE_SOURCE = new string[]
 {
     "https://www.nuget.org/api/v2",
-    "https://www.myget.org/F/nunit/api/v2"
+    "https://www.myget.org/F/nunit/api/v2",
+    "https://proget.edlund.dk/nuget/nuget/"
 };
 
 var EXTENSION_PACKAGES = new []
@@ -59,7 +60,8 @@ var EXTENSION_PACKAGES = new []
   "NUnit.Extension.NUnitProjectLoader",
   "NUnit.Extension.NUnitV2Driver",
   "NUnit.Extension.NUnitV2ResultWriter",
-  "NUnit.Extension.TeamCityEventListener"
+  "NUnit.Extension.TeamCityEventListener",
+  "Edlund.Batt.NUnitProgressAddin"
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -459,7 +461,7 @@ Task("FetchExtensions")
     {
         NuGetInstall(package, new NuGetInstallSettings {
                         OutputDirectory = EXTENSION_PACKAGES_DIR,
-                        Source = new [] { "https://www.nuget.org/api/v2" }
+                        Source = PACKAGE_SOURCE
                     });
     }
 });

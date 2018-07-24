@@ -15,6 +15,7 @@
       * NUnitV2ResultWriter    - saves results in NUnit V2 format.
       * NUnitV2FrameworkDriver - runs NUnit V2 tests.
       * TeamCityEventListener - supports special progress messages used by teamcity.
+      * Edlund.Batt.NUnitProgressAddin - supports Edlund batt.
 
       Other extensions, if needed, must be installed separately.
     </description>
@@ -41,6 +42,7 @@
           <dependency id="nunit-extension-nunit-v2-result-writer" version="3.5.0" />
           <dependency id="nunit-extension-nunit-v2-driver" version="3.6.0" />
           <dependency id="nunit-extension-teamcity-event-listener" version="1.0.3" />
+          <dependency id="Edlund.Batt.NUnitProgressAddin" version="1.0.0" />
       </group>
     </dependencies>
   </metadata>

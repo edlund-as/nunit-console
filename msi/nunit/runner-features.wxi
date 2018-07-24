@@ -43,6 +43,12 @@
                  Description="Provides progress messages when running under TeamCity">
           <ComponentGroupRef Id="TEAMCITY.EVENT.LISTENER" />
         </Feature>
+        <Feature Id="EDLUND.BATT.NUNITPROGRESSADDIN"
+                 Level="1"
+                 Title="Edlund Batt Addin"
+                 Description="Provides progress messages when running under Batt">
+          <ComponentGroupRef Id="EDLUND.BATT.NUNITPROGRESSADDIN" />
+        </Feature>
       </Feature>
 
       <Feature Id="NUNIT.CONSOLE"

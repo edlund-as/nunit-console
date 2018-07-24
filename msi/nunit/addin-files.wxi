@@ -29,6 +29,13 @@
             </Component>
         </ComponentGroup>
 
+        <ComponentGroup Id="EDLUND.BATT.NUNITPROGRESSADDIN" Directory="ADDINS">
+            <Component Id="EDLUND.BATT.NUNITPROGRESSADDIN" Location="local" Guid="1FFB74A8-62FB-4EEB-B7E0-DC4770387EB7">
+                <File Id="Batt.NUnit3Addin.dll"
+                      Source="$(var.InstallImage)bin/addins/Batt.NUnit3Addin.dll" />
+            </Component>
+        </ComponentGroup>
+
         <ComponentGroup Id="NUNIT.V2.DRIVER" Directory="ADDINS">
             <Component Id="NUNIT.V2.DRIVER" Location="local" Guid="4A55D836-7719-40A2-BDFF-CE3980FE3B42">
                 <File Id="nunit.v2.driver.dll"
