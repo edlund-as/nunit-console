@@ -58,7 +58,7 @@ var EXTENSION_PACKAGES = new []
 {
   "NUnit.Extension.VSProjectLoader",
   "NUnit.Extension.NUnitProjectLoader",
-  "NUnit.Extension.NUnitV2Driver",
+  "NUnit.Extension.NUnitV2Driver.Edlund",
   "NUnit.Extension.NUnitV2ResultWriter",
   "NUnit.Extension.TeamCityEventListener",
   "Edlund.Batt.NUnitProgressAddin"
