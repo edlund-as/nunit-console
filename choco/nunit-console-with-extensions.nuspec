@@ -2,10 +2,10 @@
 <!-- Do not remove this test for UTF-8: if “Ω” doesn’t appear as greek uppercase omega letter enclosed in quotation marks, you should use an editor that supports UTF-8, not this one. -->
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
-    <id>nunit-console-with-extensions</id>
+    <id>nunit-console-with-extensions-edlund</id>
     <version>0.0.0</version>
-    <title>NUnit 3 Console Runner Plus Extensions</title>
-    <summary>Console runner for the NUnit 3 unit-testing framework with selected extensions.</summary>
+    <title>NUnit 3 Console Runner Plus Extensions (Edlund)</title>
+    <summary>Console runner for the NUnit 3 unit-testing framework with selected extensions (Edlund version).</summary>
     <description>
       This package includes the nunit3-console runner and test engine for version 3 of the NUnit unit-testing framework.
 
@@ -17,7 +17,7 @@
       * TeamCityEventListener - supports special progress messages used by teamcity.
       * Edlund.Batt.NUnitProgressAddin - supports Edlund batt.
 
-      Other extensions, if needed, must be installed separately.
+      Other extensions, if needed, must be installed separately. Edlund version.
     </description>
     <projectUrl>http://nunit.org</projectUrl>
     <projectSourceUrl>https://github.com/nunit/nunit-console</projectSourceUrl>
@@ -32,17 +32,17 @@
     <authors>Charlie Poole, Rob Prouse</authors>
     <owners>Charlie Poole, Rob Prouse</owners>
     <language>en-US</language>
-    <tags>nunit console runner test testing tdd</tags>
+    <tags>edlund nunit console runner test testing tdd</tags>
     <copyright>Copyright (c) 2018 Charlie Poole, Rob Prouse</copyright>
     <dependencies>
       <group>
-          <dependency id="nunit-console-runner" version="$version$" />
+          <dependency id="nunit-console-runner-edlund" version="$version$" />
           <dependency id="nunit-extension-nunit-project-loader" version="3.5.0" />
           <dependency id="nunit-extension-vs-project-loader" version="3.7.0" />
           <dependency id="nunit-extension-nunit-v2-result-writer" version="3.5.0" />
           <dependency id="nunit-extension-nunit-v2-driver-edlund" version="3.7.0" />
           <dependency id="nunit-extension-teamcity-event-listener" version="1.0.3" />
-          <dependency id="Edlund.Batt.NUnitProgressAddin" version="1.0.0" />
+          <dependency id="nunit-extension-batt-edlund" version="1.0.0" />
       </group>
     </dependencies>
   </metadata>
