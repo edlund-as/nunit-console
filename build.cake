@@ -12,7 +12,7 @@ bool IsDotNetCoreInstalled = false;
 // SET PACKAGE VERSION
 //////////////////////////////////////////////////////////////////////
 
-var version = "3.8.2";
+var version = "3.8.3";
 var modifier = "";
 
 var isAppveyor = BuildSystem.IsRunningOnAppVeyor;
@@ -51,7 +51,8 @@ var PACKAGE_SOURCE = new string[]
 {
     "https://www.nuget.org/api/v2",
     "https://www.myget.org/F/nunit/api/v2",
-    "https://proget.edlund.dk/nuget/nuget/"
+    "https://proget.edlund.dk/nuget/nuget/",
+    @"C:\src\nunit\nuget-packages"
 };
 
 var EXTENSION_PACKAGES = new []
