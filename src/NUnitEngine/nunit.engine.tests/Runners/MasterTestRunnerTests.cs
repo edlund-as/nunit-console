@@ -76,31 +76,31 @@ namespace NUnit.Engine.Runners.Tests
             // 2. The .NET Standard builds don't seem to handle notest-assembly correctly, so those entries are commented out.
             // 3. The .NET Standard 1.6 build is not intended to handle projects.
 #if NETCOREAPP1_1
-            new TestRunData( "mock-assembly.dll", typeof(LocalTestRunner), MockAssemblyData ),
-            new TestRunData( "mock-assembly.dll,mock-assembly.dll", typeof(AggregatingTestRunner), MockAssemblyData, MockAssemblyData ),
-            //new TestRunData( "notest-assembly.dll", typeof(LocalTestRunner), NoTestAssemblyData ),
-            //new TestRunData( "notest-assembly.dll,notest-assembly.dll", typeof(AggregatingTestRunner), NoTestAssemblyData, NoTestAssemblyData ),
-            //new TestRunData( "mock-assembly.dll,notest-assembly.dll", typeof(AggregatingTestRunner), MockAssemblyData, NoTestAssemblyData )
+            new TestRunData( "mock-assembly.dll", MockAssemblyData ),
+            new TestRunData( "mock-assembly.dll,mock-assembly.dll", MockAssemblyData, MockAssemblyData ),
+            //new TestRunData( "notest-assembly.dll", NoTestAssemblyData ),
+            //new TestRunData( "notest-assembly.dll,notest-assembly.dll", NoTestAssemblyData, NoTestAssemblyData ),
+            //new TestRunData( "mock-assembly.dll,notest-assembly.dll", MockAssemblyData, NoTestAssemblyData )
 #elif NETCOREAPP2_0
-            new TestRunData( "mock-assembly.dll", typeof(LocalTestRunner), MockAssemblyData ),
-            new TestRunData( "mock-assembly.dll,mock-assembly.dll", typeof(AggregatingTestRunner), MockAssemblyData, MockAssemblyData ),
-            //new TestRunData( "notest-assembly.dll", typeof(LocalTestRunner), NoTestAssemblyData ),
-            //new TestRunData( "notest-assembly.dll,notest-assembly.dll", typeof(AggregatingTestRunner), NoTestAssemblyData, NoTestAssemblyData ),
-            //new TestRunData( "mock-assembly.dll,notest-assembly.dll", typeof(AggregatingTestRunner), MockAssemblyData, NoTestAssemblyData ),
-            new TestRunData( "project1.nunit", typeof(AggregatingTestRunner), Project1Data ),
-            new TestRunData( "project2.nunit", typeof(AggregatingTestRunner), Project2Data ),
-            new TestRunData( "project1.nunit,project2.nunit", typeof(AggregatingTestRunner), Project1Data, Project2Data ),
-            new TestRunData( "project1.nunit,mock-assembly.dll,project2.nunit", typeof(AggregatingTestRunner), Project1Data, MockAssemblyData, Project2Data)
+            new TestRunData( "mock-assembly.dll", MockAssemblyData ),
+            new TestRunData( "mock-assembly.dll,mock-assembly.dll", MockAssemblyData, MockAssemblyData ),
+            //new TestRunData( "notest-assembly.dll", NoTestAssemblyData ),
+            //new TestRunData( "notest-assembly.dll,notest-assembly.dll, NoTestAssemblyData, NoTestAssemblyData ),
+            //new TestRunData( "mock-assembly.dll,notest-assembly.dll", MockAssemblyData, NoTestAssemblyData ),
+            new TestRunData( "project1.nunit", Project1Data ),
+            new TestRunData( "project2.nunit", Project2Data ),
+            new TestRunData( "project1.nunit,project2.nunit", Project1Data, Project2Data ),
+            new TestRunData( "project1.nunit,mock-assembly.dll,project2.nunit", Project1Data, MockAssemblyData, Project2Data)
 #else
-            new TestRunData( "mock-assembly.dll", typeof(TestDomainRunner), MockAssemblyData ),
-            new TestRunData( "mock-assembly.dll,mock-assembly.dll", typeof(MultipleTestDomainRunner), MockAssemblyData, MockAssemblyData ),
-            new TestRunData( "notest-assembly.dll", typeof(TestDomainRunner), NoTestAssemblyData ),
-            new TestRunData( "notest-assembly.dll,notest-assembly.dll", typeof(MultipleTestDomainRunner), NoTestAssemblyData, NoTestAssemblyData ),
-            new TestRunData( "mock-assembly.dll,notest-assembly.dll", typeof(MultipleTestDomainRunner), MockAssemblyData, NoTestAssemblyData ),
-            new TestRunData( "project1.nunit", typeof(AggregatingTestRunner), Project1Data ),
-            new TestRunData( "project2.nunit", typeof(AggregatingTestRunner), Project2Data ),
-            new TestRunData( "project1.nunit,project2.nunit", typeof(AggregatingTestRunner), Project1Data, Project2Data ),
-            new TestRunData( "project1.nunit,mock-assembly.dll,project2.nunit", typeof(AggregatingTestRunner), Project1Data, MockAssemblyData, Project2Data)
+            new TestRunData( "mock-assembly.dll", MockAssemblyData ),
+            new TestRunData( "mock-assembly.dll,mock-assembly.dll", MockAssemblyData, MockAssemblyData ),
+            new TestRunData( "notest-assembly.dll", NoTestAssemblyData ),
+            new TestRunData( "notest-assembly.dll,notest-assembly.dll", NoTestAssemblyData, NoTestAssemblyData ),
+            new TestRunData( "mock-assembly.dll,notest-assembly.dll", MockAssemblyData, NoTestAssemblyData ),
+            new TestRunData( "project1.nunit", Project1Data ),
+            new TestRunData( "project2.nunit", Project2Data ),
+            new TestRunData( "project1.nunit,project2.nunit", Project1Data, Project2Data ),
+            new TestRunData( "project1.nunit,mock-assembly.dll,project2.nunit", Project1Data, MockAssemblyData, Project2Data)
 #endif
         };
 
@@ -143,14 +143,6 @@ namespace NUnit.Engine.Runners.Tests
 
             if (_services != null)
                 _services.ServiceManager.Dispose();
-        }
-
-        [Test]
-        public void CheckInternalRunner()
-        {
-            var prop = typeof(MasterTestRunner).GetField("_engineRunner", BindingFlags.NonPublic | BindingFlags.Instance);
-            var runner = prop.GetValue(_runner);
-            Assert.That(runner, Is.TypeOf(_testRunData.ExpectedRunner));
         }
 
         [Test]
@@ -291,8 +283,15 @@ namespace NUnit.Engine.Runners.Tests
 
         private void CheckTestRunEvents()
         {
-            Assert.That(_events[0].Name, Is.EqualTo("start-run"), "First event should be start-run");
-            Assert.That(_events[0].GetAttribute("count", -1), Is.EqualTo(_testRunData.Tests), "Incorrect count in start-run event");
+            var startRun = _events[0];
+            Assert.That(startRun.Name, Is.EqualTo("start-run"), "First event should be start-run");
+            Assert.That(startRun.GetAttribute("engine-version"), Is.Not.Null, "Incorrect engine-version in start-run event");
+            Assert.That(startRun.GetAttribute("clr-version"), Is.Not.Null, "Incorrect clr-version in start-run event");
+            Assert.That(startRun.GetAttribute("start-time", DateTime.Now.AddDays(-2)), Is.GreaterThan(DateTime.Now.AddDays(-1)), "Incorrect start-time in start-run event");
+            Assert.That(startRun.GetAttribute("count", -1), Is.EqualTo(_testRunData.Tests), "Incorrect count in start-run event");
+#if !NETSTANDARD1_6 && !NETCOREAPP1_1
+            Assert.That(startRun.FirstChild.Name, Is.EqualTo("command-line"), "First child of start-run should be command-line");
+#endif
             Assert.That(_events[_events.Count - 1].Name, Is.EqualTo("test-run"), "Last event should be test-run");
 
             Assert.That(_events.Count(x => x.Name == "start-run"), Is.EqualTo(1), "More than one start-run event");
@@ -316,14 +315,12 @@ namespace NUnit.Engine.Runners.Tests
             private const string Q = "\"";
 
             public string CommandLine;
-            public Type ExpectedRunner;
             public ResultData[] ResultData;
 
-            public TestRunData(string commandLine, Type expectedRunner, params ResultData[] containedResults)
+            public TestRunData(string commandLine, params ResultData[] containedResults)
                 : base(containedResults)
             {
                 CommandLine = commandLine;
-                ExpectedRunner = expectedRunner;
             }
 
             public override string ToString()

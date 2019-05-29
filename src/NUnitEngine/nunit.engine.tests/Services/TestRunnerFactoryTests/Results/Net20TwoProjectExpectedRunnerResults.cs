@@ -1,5 +1,5 @@
 ﻿// ***********************************************************************
-// Copyright (c) 2018 Charlie Poole, Rob Prouse
+// Copyright (c) 2019 Charlie Poole, Rob Prouse
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -28,9 +28,10 @@ using NUnit.Engine.Runners;
 namespace NUnit.Engine.Tests.Services.TestRunnerFactoryTests.Results
 {
 #if !NETCOREAPP
-    internal static class Net20TwoAssemblyExpectedRunnerResults
+    internal static class Net20TwoProjectExpectedRunnerResults
     {
-        private static readonly string ExceptionMessage = $"No expected Test result provided for this {nameof(ProcessModel)}/{nameof(DomainUsage)} combination.";
+        private static readonly string ExceptionMessage =
+            $"No expected Test result provided for this {nameof(ProcessModel)}/{nameof(DomainUsage)} combination.";
 
         public static RunnerResult ResultFor(ProcessModel processModel, DomainUsage domainUsage)
         {
@@ -62,8 +63,8 @@ namespace NUnit.Engine.Tests.Services.TestRunnerFactoryTests.Results
                         TestRunner = typeof(MultipleTestProcessRunner),
                         SubRunners = new[]
                         {
-                            new RunnerResult {TestRunner = typeof(ProcessRunner)},
-                            new RunnerResult {TestRunner = typeof(ProcessRunner)}
+                            new RunnerResult { TestRunner = typeof(ProcessRunner) },
+                            new RunnerResult { TestRunner = typeof(ProcessRunner) }
                         }
                     };
                 default:
@@ -98,8 +99,8 @@ namespace NUnit.Engine.Tests.Services.TestRunnerFactoryTests.Results
                         TestRunner = typeof(MultipleTestDomainRunner),
                         SubRunners = new[]
                         {
-                            new RunnerResult {TestRunner = typeof(TestDomainRunner)},
-                            new RunnerResult {TestRunner = typeof(TestDomainRunner)}
+                            new RunnerResult { TestRunner = typeof(TestDomainRunner) },
+                            new RunnerResult { TestRunner = typeof(TestDomainRunner) }
                         }
                     };
                 case DomainUsage.None:
@@ -118,8 +119,8 @@ namespace NUnit.Engine.Tests.Services.TestRunnerFactoryTests.Results
                         TestRunner = typeof(MultipleTestDomainRunner),
                         SubRunners = new[]
                         {
-                            new RunnerResult {TestRunner = typeof(TestDomainRunner)},
-                            new RunnerResult {TestRunner = typeof(TestDomainRunner)}
+                            new RunnerResult { TestRunner = typeof(TestDomainRunner) },
+                            new RunnerResult { TestRunner = typeof(TestDomainRunner) }
                         }
                     };
                 default:
@@ -140,8 +141,8 @@ namespace NUnit.Engine.Tests.Services.TestRunnerFactoryTests.Results
                         TestRunner = typeof(MultipleTestProcessRunner),
                         SubRunners = new[]
                         {
-                            new RunnerResult {TestRunner = typeof(ProcessRunner)},
-                            new RunnerResult {TestRunner = typeof(ProcessRunner)}
+                            new RunnerResult { TestRunner = typeof(ProcessRunner) },
+                            new RunnerResult { TestRunner = typeof(ProcessRunner) }
                         }
                     };
                 default:
