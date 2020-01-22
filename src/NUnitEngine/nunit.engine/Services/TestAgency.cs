@@ -34,19 +34,6 @@ using NUnit.Engine.Internal;
 namespace NUnit.Engine.Services
 {
     /// <summary>
-    /// Enumeration used to report AgentStatus
-    /// </summary>
-    public enum AgentStatus
-    {
-        Unknown,
-        Starting,
-        Ready,
-        Busy,
-        Stopping,
-        Terminated
-    }
-
-    /// <summary>
     /// The TestAgency class provides RemoteTestAgents
     /// on request and tracks their status. Agents
     /// are wrapped in an instance of the TestAgent
@@ -58,19 +45,12 @@ namespace NUnit.Engine.Services
     {
         private static readonly Logger log = InternalTrace.GetLogger(typeof(TestAgency));
 
-        #region Private Fields
+        private readonly AgentStore _agents = new AgentStore();
 
-        private readonly AgentDataBase _agentData = new AgentDataBase();
-
-        #endregion
-
-        #region Constructors
         public TestAgency() : this( "TestAgency", 0 ) { }
 
         public TestAgency( string uri, int port ) : base( uri, port ) { }
-        #endregion
 
-        #region ServerBase Overrides
         //public override void Stop()
         //{
         //    foreach( KeyValuePair<Guid,AgentRecord> pair in agentData )
@@ -94,22 +74,11 @@ namespace NUnit.Engine.Services
 
         //    base.Stop ();
         //}
-        #endregion
 
-        #region Public Methods - Called by Agents
-        public void Register( ITestAgent agent )
+        public void Register(ITestAgent agent)
         {
-            AgentRecord r = _agentData[agent.Id];
-            if ( r == null )
-                throw new ArgumentException(
-                    string.Format("Agent {0} is not in the agency database", agent.Id),
-                    "agentId");
-            r.Agent = agent;
+            _agents.Register(agent);
         }
-
-        #endregion
-
-        #region Method Called by Clients
 
         public ITestAgent GetAgent(TestPackage package, int waitTime)
         {
@@ -117,45 +86,12 @@ namespace NUnit.Engine.Services
             return CreateRemoteAgent(package, waitTime);
         }
 
-        public void ReleaseAgent( ITestAgent agent )
+        internal bool IsAgentProcessActive(Guid agentId, out Process process)
         {
-            AgentRecord r = _agentData[agent.Id];
-            if (r == null)
-                log.Error(string.Format("Unable to release agent {0} - not in database", agent.Id));
-            else
-            {
-                r.Status = AgentStatus.Ready;
-                log.Debug("Releasing agent " + agent.Id.ToString());
-            }
+            return _agents.IsAgentProcessActive(agentId, out process);
         }
 
-        internal bool IsAgentRunning(Guid id)
-        {
-            var agentRecord = _agentData[id];
-            return agentRecord != null && agentRecord.Status != AgentStatus.Terminated;
-        }
-
-        internal int? GetAgentExitCode(Guid id)
-        {
-            var agentRecord = _agentData[id];
-            if (agentRecord?.Process != null && agentRecord.Process.HasExited)
-            {
-                try
-                {
-                    return agentRecord.Process.ExitCode;
-                }
-                catch (NotSupportedException)
-                {
-                    return null;
-                }
-            }
-            return null;
-        }
-
-        #endregion
-
-        #region Helper Methods
-        private Guid LaunchAgentProcess(TestPackage package)
+        private Process LaunchAgentProcess(TestPackage package, Guid agentId)
         {
             RuntimeFramework targetRuntime;
             string runtimeSetting = package.GetSetting(EnginePackageSettings.RuntimeFramework, "");
@@ -210,8 +146,7 @@ namespace NUnit.Engine.Services
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.CreateNoWindow = true;
             p.EnableRaisingEvents = true;
-            p.Exited += OnAgentExit;
-            Guid agentId = Guid.NewGuid();
+            p.Exited += (sender, e) => OnAgentExit((Process)sender, agentId);
             string arglist = agentId.ToString() + " " + ServerUrl + " " + agentArgs;
 
             targetRuntime = ServiceContext.GetService<RuntimeFrameworkService>().GetBestAvailableFramework(targetRuntime);
@@ -247,30 +182,29 @@ namespace NUnit.Engine.Services
             log.Debug("Launched Agent process {0} - see nunit-agent_{0}.log", p.Id);
             log.Debug("Command line: \"{0}\" {1}", p.StartInfo.FileName, p.StartInfo.Arguments);
 
-            _agentData.Add( new AgentRecord( agentId, p, null, AgentStatus.Starting ) );
-            return agentId;
+            _agents.Start(agentId, p);
+            return p;
         }
 
         private ITestAgent CreateRemoteAgent(TestPackage package, int waitTime)
         {
-            var agentId = LaunchAgentProcess(package);
+            var agentId = Guid.NewGuid();
+            var process = LaunchAgentProcess(package, agentId);
 
             log.Debug($"Waiting for agent {agentId:B} to register");
 
             const int pollTime = 200;
 
-            var agentRecord = _agentData[agentId];
-            var agentProcess = agentRecord.Process;
-
-            //Wait for agent registration based on the agent actually getting processor time - to avoid falling over under process starvation
-            while(waitTime > agentProcess.TotalProcessorTime.TotalMilliseconds && !agentProcess.HasExited)
+            // Wait for agent registration based on the agent actually getting processor time to avoid falling over
+            // under process starvation.
+            while (waitTime > process.TotalProcessorTime.TotalMilliseconds && !process.HasExited)
             {
                 Thread.Sleep(pollTime);
 
-                if (agentRecord.Agent != null)
+                if (_agents.IsReady(agentId, out var agent))
                 {
                     log.Debug($"Returning new agent {agentId:B}");
-                    return new RemoteTestAgentProxy(agentRecord.Agent, agentRecord.Id);
+                    return new RemoteTestAgentProxy(agent, agentId);
                 }
             }
 
@@ -289,14 +223,9 @@ namespace NUnit.Engine.Services
             return Path.Combine(engineDir, agentName);
         }
 
-        private void OnAgentExit(object sender, EventArgs e)
+        private void OnAgentExit(Process process, Guid agentId)
         {
-            var process = sender as Process;
-            if (process == null)
-                return;
-
-            var agentRecord = _agentData.GetDataForProcess(process);
-            agentRecord.Status = AgentStatus.Terminated;
+            _agents.MarkTerminated(agentId);
 
             string errorMsg;
 
@@ -331,10 +260,6 @@ namespace NUnit.Engine.Services
             throw new NUnitEngineException(errorMsg);
         }
 
-        #endregion
-
-        #region IService Members
-
         public IServiceLocator ServiceContext { get; set; }
 
         public ServiceStatus Status { get; private set; }
@@ -364,8 +289,6 @@ namespace NUnit.Engine.Services
                 throw;
             }
         }
-
-        #endregion
     }
 }
 #endif

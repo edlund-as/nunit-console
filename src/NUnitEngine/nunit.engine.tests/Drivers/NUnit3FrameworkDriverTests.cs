@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // ***********************************************************************
 
-#if !NETCOREAPP1_1 &&!NETCOREAPP2_0
+#if !NETCOREAPP1_1 &&!NETCOREAPP2_1
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -51,7 +51,6 @@ namespace NUnit.Engine.Drivers.Tests
             _driver = new NUnit3FrameworkDriver(AppDomain.CurrentDomain, assemblyName);
         }
 
-        #region Construction Test
         //[Test]
         //public void ConstructController()
         //{
@@ -66,9 +65,7 @@ namespace NUnit.Engine.Drivers.Tests
             var assemblyName = typeof(NUnit.Framework.TestAttribute).Assembly.GetName();
             Assert.That(new NUnit3FrameworkDriver(AppDomain.CurrentDomain, assemblyName), Throws.ArgumentException);
         }
-        #endregion
 
-        #region Load
         [Test]
         public void Load_GoodFile_ReturnsRunnableSuite()
         {
@@ -80,9 +77,7 @@ namespace NUnit.Engine.Drivers.Tests
             Assert.That(result.GetAttribute("testcasecount"), Is.EqualTo(MockAssembly.Tests.ToString()));
             Assert.That(result.SelectNodes("test-suite").Count, Is.EqualTo(0), "Load result should not have child tests");
         }
-        #endregion
 
-        #region Explore
         [Test]
         public void Explore_AfterLoad_ReturnsRunnableSuite()
         {
@@ -105,9 +100,7 @@ namespace NUnit.Engine.Drivers.Tests
             Assert.That(ex, Is.TypeOf<InvalidOperationException>());
             Assert.That(ex.Message, Is.EqualTo(LOAD_MESSAGE));
         }
-        #endregion
 
-        #region CountTests
         [Test]
         public void CountTestsAction_AfterLoad_ReturnsCorrectCount()
         {
@@ -124,9 +117,7 @@ namespace NUnit.Engine.Drivers.Tests
             Assert.That(ex, Is.TypeOf<InvalidOperationException>());
             Assert.That(ex.Message, Is.EqualTo(LOAD_MESSAGE));
         }
-        #endregion
 
-        #region RunTests
         [Test]
         public void RunTestsAction_AfterLoad_ReturnsRunnableSuite()
         {
@@ -162,17 +153,13 @@ namespace NUnit.Engine.Drivers.Tests
             var ex = Assert.Catch(() => _driver.Run(new NullListener(), invalidFilter));
             Assert.That(ex, Is.TypeOf<NUnitEngineException>());
         }
-        #endregion
 
-        #region Helper Methods
         private static string GetSkipReason(XmlNode result)
         {
             var propNode = result.SelectSingleNode(string.Format("properties/property[@name='{0}']", PropertyNames.SkipReason));
             return propNode == null ? null : propNode.GetAttribute("value");
         }
-        #endregion
 
-        #region Nested Callback Class
         private class CallbackEventHandler : System.Web.UI.ICallbackEventHandler
         {
             private string _result;
@@ -187,9 +174,7 @@ namespace NUnit.Engine.Drivers.Tests
                 _result = eventArgument;
             }
         }
-        #endregion
 
-        #region Nested NullListener Class
         public class NullListener : ITestEventListener
         {
             public void OnTestEvent(string testEvent)
@@ -197,7 +182,6 @@ namespace NUnit.Engine.Drivers.Tests
                 // No action
             }
         }
-        #endregion
     }
 }
 #endif

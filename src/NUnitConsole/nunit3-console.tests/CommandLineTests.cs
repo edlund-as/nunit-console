@@ -25,18 +25,16 @@ using System;
 using System.IO;
 using System.Reflection;
 using NUnit.Common;
-using NUnit.Options;
 using System.Collections.Generic;
 using NUnit.Framework;
-using NUnit.Tests;
+
+using NUnit.Options;
 
 namespace NUnit.ConsoleRunner.Tests
 {
     [TestFixture]
     public class CommandLineTests
     {
-        #region Argument Preprocessor Tests
-
         [TestCase("--arg", "--arg")]
         [TestCase("--ArG", "--ArG")]
         [TestCase("--arg1 --arg2", "--arg1", "--arg2")]
@@ -151,14 +149,10 @@ namespace NUnit.ConsoleRunner.Tests
             Assert.That(options.ErrorMessages, Is.EqualTo(expectedErrors));
         }
 
-        #endregion
-
-        #region General Tests
-
         [Test]
         public void NoInputFiles()
         {
-            ConsoleOptions options = new ConsoleOptions();
+            ConsoleOptions options = ConsoleMocks.Options();
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.InputFiles.Count, Is.EqualTo(0));
         }
@@ -168,14 +162,16 @@ namespace NUnit.ConsoleRunner.Tests
         [TestCase("StopOnError", "stoponerror")]
         [TestCase("WaitBeforeExit", "wait")]
         [TestCase("NoHeader", "noheader|noh")]
-        [TestCase("RunAsX86", "x86")]
         [TestCase("DisposeRunners", "dispose-runners")]
-        [TestCase("ShadowCopyFiles", "shadowcopy")]
         [TestCase("TeamCity", "teamcity")]
+        [TestCase("SkipNonTestAssemblies", "skipnontestassemblies")]
+#if NET35
+        [TestCase("RunAsX86", "x86")]
+        [TestCase("ShadowCopyFiles", "shadowcopy")]
         [TestCase("DebugTests", "debug")]
         [TestCase("PauseBeforeRun", "pause")]
         [TestCase("LoadUserProfile", "loaduserprofile")]
-        [TestCase("SkipNonTestAssemblies", "skipnontestassemblies")]
+#endif
 #if DEBUG
         [TestCase("DebugAgent", "debug-agent")]
 #endif
@@ -192,39 +188,41 @@ namespace NUnit.ConsoleRunner.Tests
 
                 if (option.Length == 1)
                 {
-                    options = new ConsoleOptions("-" + option);
+                    options = ConsoleMocks.Options("-" + option);
                     Assert.That((bool)property.GetValue(options, null), Is.EqualTo(true), "Didn't recognize -" + option);
 
-                    options = new ConsoleOptions("-" + option + "+");
+                    options = ConsoleMocks.Options("-" + option + "+");
                     Assert.That((bool)property.GetValue(options, null), Is.EqualTo(true), "Didn't recognize -" + option + "+");
 
-                    options = new ConsoleOptions("-" + option + "-");
+                    options = ConsoleMocks.Options("-" + option + "-");
                     Assert.That((bool)property.GetValue(options, null), Is.EqualTo(false), "Didn't recognize -" + option + "-");
                 }
                 else
                 {
-                    options = new ConsoleOptions("--" + option);
+                    options = ConsoleMocks.Options("--" + option);
                     Assert.That((bool)property.GetValue(options, null), Is.EqualTo(true), "Didn't recognize --" + option);
                 }
 
-                options = new ConsoleOptions("/" + option);
+                options = ConsoleMocks.Options("/" + option);
                 Assert.That((bool)property.GetValue(options, null), Is.EqualTo(true), "Didn't recognize /" + option);
             }
         }
 
         [TestCase("WhereClause", "where", new string[] { "cat==Fast" }, new string[0])]
         [TestCase("ActiveConfig", "config", new string[] { "Debug" }, new string[0])]
-        [TestCase("ProcessModel", "process", new string[] { "InProcess", "Separate", "Multiple" }, new string[] { "JUNK" })]
-        [TestCase("DomainUsage", "domain", new string[] { "None", "Single", "Multiple" }, new string[] { "JUNK" })]
-        [TestCase("Framework", "framework", new string[] { "net-4.0" }, new string[0])]
         [TestCase("OutFile", "output|out", new string[] { "output.txt" }, new string[0])]
-        [TestCase("ConfigurationFile", "configfile", new string[] { "mytest.config" }, new string[0] )]
         [TestCase("WorkDirectory", "work", new string[] { "results" }, new string[0])]
         [TestCase("DisplayTestLabels", "labels", new string[] { "Off", "On", "Before", "After", "All" }, new string[] { "JUNK" })]
         [TestCase("InternalTraceLevel", "trace", new string[] { "Off", "Error", "Warning", "Info", "Debug", "Verbose" }, new string[] { "JUNK" })]
         [TestCase("DefaultTestNamePattern", "test-name-format", new string[] { "{m}{a}" }, new string[0])]
         [TestCase("ConsoleEncoding", "encoding", new string[] { "utf-8", "ascii", "unicode" }, new string[0])]
+#if NET35
+        [TestCase("ProcessModel", "process", new string[] { "InProcess", "Separate", "Multiple" }, new string[] { "JUNK" })]
+        [TestCase("DomainUsage", "domain", new string[] { "None", "Single", "Multiple" }, new string[] { "JUNK" })]
+        [TestCase("Framework", "framework", new string[] { "net-4.0" }, new string[0])]
+        [TestCase("ConfigurationFile", "configfile", new string[] { "mytest.config" }, new string[0] )]
         [TestCase("PrincipalPolicy", "set-principal-policy", new string[] { "UnauthenticatedPrincipal", "NoPrincipal", "WindowsPrincipal" }, new string[] { "JUNK" })]
+#endif
         public void CanRecognizeStringOptions(string propertyName, string pattern, string[] goodValues, string[] badValues)
         {
             string[] prototypes = pattern.Split('|');
@@ -237,7 +235,7 @@ namespace NUnit.ConsoleRunner.Tests
                 foreach (string value in goodValues)
                 {
                     string optionPlusValue = string.Format("--{0}:{1}", option, value);
-                    ConsoleOptions options = new ConsoleOptions(optionPlusValue);
+                    ConsoleOptions options = ConsoleMocks.Options(optionPlusValue);
                     Assert.That(options.Validate(), Is.True, "Should be valid: " + optionPlusValue);
                     Assert.That((string)property.GetValue(options, null), Is.EqualTo(value), "Didn't recognize " + optionPlusValue);
                 }
@@ -245,22 +243,26 @@ namespace NUnit.ConsoleRunner.Tests
                 foreach (string value in badValues)
                 {
                     string optionPlusValue = string.Format("--{0}:{1}", option, value);
-                    ConsoleOptions options = new ConsoleOptions(optionPlusValue);
+                    ConsoleOptions options = ConsoleMocks.Options(optionPlusValue);
                     Assert.That(options.Validate(), Is.False, "Should not be valid: " + optionPlusValue);
                 }
             }
         }
 
+#if NET35
         [Test]
         public void CanRecognizeInProcessOption()
         {
-            ConsoleOptions options = new ConsoleOptions("--inprocess");
+            ConsoleOptions options = ConsoleMocks.Options("--inprocess");
             Assert.That(options.Validate(), Is.True, "Should be valid: --inprocess");
             Assert.That(options.ProcessModel, Is.EqualTo("InProcess"), "Didn't recognize --inprocess");
         }
+#endif
 
+#if NET35
         [TestCase("ProcessModel", "process", new string[] { "InProcess", "Separate", "Multiple" })]
         [TestCase("DomainUsage", "domain", new string[] { "None", "Single", "Multiple" })]
+#endif
         [TestCase("DisplayTestLabels", "labels", new string[] { "Off", "On", "Before", "After", "All" })]
         [TestCase("InternalTraceLevel", "trace", new string[] { "Off", "Error", "Warning", "Info", "Debug", "Verbose" })]
         public void CanRecognizeLowerCaseOptionValues(string propertyName, string optionName, string[] canonicalValues)
@@ -272,7 +274,7 @@ namespace NUnit.ConsoleRunner.Tests
             {
                 string lowercaseValue = canonicalValue.ToLowerInvariant();
                 string optionPlusValue = string.Format("--{0}:{1}", optionName, lowercaseValue);
-                ConsoleOptions options = new ConsoleOptions(optionPlusValue);
+                ConsoleOptions options = ConsoleMocks.Options(optionPlusValue);
                 Assert.That(options.Validate(), Is.True, "Should be valid: " + optionPlusValue);
                 Assert.That((string)property.GetValue(options, null), Is.EqualTo(canonicalValue), "Didn't recognize " + optionPlusValue);
             }
@@ -281,7 +283,9 @@ namespace NUnit.ConsoleRunner.Tests
         [TestCase("DefaultTimeout", "timeout")]
         [TestCase("RandomSeed", "seed")]
         [TestCase("NumberOfTestWorkers", "workers")]
+#if NET35
         [TestCase("MaxAgents", "agents")]
+#endif
         public void CanRecognizeIntOptions(string propertyName, string pattern)
         {
             string[] prototypes = pattern.Split('|');
@@ -291,38 +295,13 @@ namespace NUnit.ConsoleRunner.Tests
 
             foreach (string option in prototypes)
             {
-                ConsoleOptions options = new ConsoleOptions("--" + option + ":42");
+                ConsoleOptions options = ConsoleMocks.Options("--" + option + ":42");
                 Assert.That((int)property.GetValue(options, null), Is.EqualTo(42), "Didn't recognize --" + option + ":42");
             }
         }
 
-        //[TestCase("InternalTraceLevel", "trace", typeof(InternalTraceLevel))]
-        //public void CanRecognizeEnumOptions(string propertyName, string pattern, Type enumType)
-        //{
-        //    string[] prototypes = pattern.Split('|');
-
-        //    PropertyInfo property = GetPropertyInfo(propertyName);
-        //    Assert.IsNotNull(property, "Property {0} not found", propertyName);
-        //    Assert.IsTrue(property.PropertyType.IsEnum, "Property {0} is not an enum", propertyName);
-        //    Assert.AreEqual(enumType, property.PropertyType);
-
-        //    foreach (string option in prototypes)
-        //    {
-        //        foreach (string name in Enum.GetNames(enumType))
-        //        {
-        //            {
-        //                ConsoleOptions options = new ConsoleOptions("--" + option + ":" + name);
-        //                Assert.AreEqual(name, property.GetValue(options, null).ToString(), "Didn't recognize -" + option + ":" + name);
-        //            }
-        //        }
-        //    }
-        //}
-
         [TestCase("--where")]
         [TestCase("--config")]
-        [TestCase("--process")]
-        [TestCase("--domain")]
-        [TestCase("--framework")]
         [TestCase("--timeout")]
         [TestCase("--output")]
         [TestCase("--work")]
@@ -330,9 +309,14 @@ namespace NUnit.ConsoleRunner.Tests
         [TestCase("--test-name-format")]
         [TestCase("--params")]
         [TestCase("--encoding")]
+#if NET35
+        [TestCase("--process")]
+        [TestCase("--domain")]
+        [TestCase("--framework")]
+#endif
         public void MissingValuesAreReported(string option)
         {
-            ConsoleOptions options = new ConsoleOptions(option + "=");
+            ConsoleOptions options = ConsoleMocks.Options(option + "=");
             Assert.That(options.Validate(), Is.False, "Missing value should not be valid");
             Assert.That(options.ErrorMessages[0], Is.EqualTo("Missing required value for option '" + option + "'."));
         }
@@ -340,80 +324,72 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void AssemblyName()
         {
-            ConsoleOptions options = new ConsoleOptions("nunit.tests.dll");
+            ConsoleOptions options = ConsoleMocks.Options("nunit.tests.dll");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.InputFiles.Count, Is.EqualTo(1));
             Assert.That(options.InputFiles[0], Is.EqualTo("nunit.tests.dll"));
         }
 
-        //[Test]
-        //public void FixtureNamePlusAssemblyIsValid()
-        //{
-        //    ConsoleOptions options = new ConsoleOptions( "-fixture:NUnit.Tests.AllTests", "nunit.tests.dll" );
-        //    Assert.AreEqual("nunit.tests.dll", options.Parameters[0]);
-        //    Assert.AreEqual("NUnit.Tests.AllTests", options.fixture);
-        //    Assert.IsTrue(options.Validate());
-        //}
-
         [Test]
         public void AssemblyAloneIsValid()
         {
-            ConsoleOptions options = new ConsoleOptions("nunit.tests.dll");
+            ConsoleOptions options = ConsoleMocks.Options("nunit.tests.dll");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(0), "command line should be valid");
         }
 
-        [Test, Platform("32-Bit")]
+#if NET35
+        [Test]
         public void X86AndInProcessAreCompatibleIn32BitProcess()
         {
-            ConsoleOptions options = new ConsoleOptions("nunit.tests.dll", "--x86", "--inprocess");
+            //Can be replaced with PlatformAttribute("32-Bit"), once NUnit Framework 3.12 can be used
+            if (IntPtr.Size == 8)
+            {
+                Assert.Inconclusive("Test can only be run on 32-bit platform");
+            }
+
+            ConsoleOptions options = ConsoleMocks.Options("nunit.tests.dll", "--x86", "--inprocess");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(0), "command line should be valid");
         }
 
-        [Test, Platform("64-Bit")]
+        [Test]
         public void X86AndInProcessAreNotCompatibleIn64BitProcess()
         {
-            ConsoleOptions options = new ConsoleOptions("nunit.tests.dll", "--x86", "--inprocess");
+            //Can be replaced with PlatformAttribute("64-Bit"), once NUnit Framework 3.12 can be used
+            if (IntPtr.Size == 4)
+            {
+                Assert.Inconclusive("Test can only be run on 64-bit platform");
+            }
+            ConsoleOptions options = ConsoleMocks.Options("nunit.tests.dll", "--x86", "--inprocess");
             Assert.That(options.Validate(), Is.False, "Should be invalid");
             Assert.That(options.ErrorMessages[0], Is.EqualTo("The --x86 and --inprocess options are incompatible."));
         }
+#endif
 
         [Test]
         public void InvalidOption()
         {
-            ConsoleOptions options = new ConsoleOptions("-assembly:nunit.tests.dll");
+            ConsoleOptions options = ConsoleMocks.Options("-assembly:nunit.tests.dll");
             Assert.That(options.Validate(), Is.False);
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(1));
             Assert.That(options.ErrorMessages[0], Is.EqualTo("Invalid argument: -assembly:nunit.tests.dll"));
         }
 
-
-        //[Test]
-        //public void NoFixtureNameProvided()
-        //{
-        //    ConsoleOptions options = new ConsoleOptions( "-fixture:", "nunit.tests.dll" );
-        //    Assert.IsFalse(options.Validate());
-        //}
-
         [Test]
         public void InvalidCommandLineParms()
         {
-            ConsoleOptions options = new ConsoleOptions("-garbage:TestFixture", "-assembly:Tests.dll");
+            ConsoleOptions options = ConsoleMocks.Options("-garbage:TestFixture", "-assembly:Tests.dll");
             Assert.That(options.Validate(), Is.False);
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(2));
             Assert.That(options.ErrorMessages[0], Is.EqualTo("Invalid argument: -garbage:TestFixture"));
             Assert.That(options.ErrorMessages[1], Is.EqualTo("Invalid argument: -assembly:Tests.dll"));
         }
 
-        #endregion
-
-        #region Timeout Option
-
         [Test]
         public void TimeoutIsMinusOneIfNoOptionIsProvided()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.DefaultTimeout, Is.EqualTo(-1));
         }
@@ -421,13 +397,13 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void TimeoutThrowsExceptionIfOptionHasNoValue()
         {
-            Assert.Throws<OptionException>(() => new ConsoleOptions("tests.dll", "-timeout"));
+            Assert.Throws<OptionException>(() => ConsoleMocks.Options("tests.dll", "-timeout"));
         }
 
         [Test]
         public void TimeoutParsesIntValueCorrectly()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "-timeout:5000");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "-timeout:5000");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.DefaultTimeout, Is.EqualTo(5000));
         }
@@ -435,19 +411,15 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void TimeoutCausesErrorIfValueIsNotInteger()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "-timeout:abc");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "-timeout:abc");
             Assert.That(options.Validate(), Is.False);
             Assert.That(options.DefaultTimeout, Is.EqualTo(-1));
         }
 
-        #endregion
-
-        #region EngineResult Option
-
         [Test]
         public void ResultOptionWithFilePath()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "-result:results.xml");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "-result:results.xml");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.InputFiles.Count, Is.EqualTo(1), "assembly should be set");
             Assert.That(options.InputFiles[0], Is.EqualTo("tests.dll"));
@@ -461,7 +433,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void ResultOptionWithFilePathAndFormat()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "-result:results.xml;format=nunit2");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "-result:results.xml;format=nunit2");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.InputFiles.Count, Is.EqualTo(1), "assembly should be set");
             Assert.That(options.InputFiles[0], Is.EqualTo("tests.dll"));
@@ -496,7 +468,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void FileNameWithoutResultOptionLooksLikeParameter()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "results.xml");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "results.xml");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(0));
             Assert.That(options.InputFiles.Count, Is.EqualTo(2));
@@ -505,7 +477,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void ResultOptionWithoutFileNameIsInvalid()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "-result:");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "-result:");
             Assert.That(options.Validate(), Is.False, "Should not be valid");
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(1), "An error was expected");
         }
@@ -545,7 +517,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void DefaultResultSpecification()
         {
-            var options = new ConsoleOptions("test.dll");
+            var options = ConsoleMocks.Options("test.dll");
             Assert.That(options.ResultOutputSpecifications.Count, Is.EqualTo(1));
 
             var spec = options.ResultOutputSpecifications[0];
@@ -557,21 +529,21 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void NoResultSuppressesDefaultResultSpecification()
         {
-            var options = new ConsoleOptions("test.dll", "-noresult");
+            var options = ConsoleMocks.Options("test.dll", "-noresult");
             Assert.That(options.ResultOutputSpecifications.Count, Is.EqualTo(0));
         }
 
         [Test]
         public void NoResultSuppressesAllResultSpecifications()
         {
-            var options = new ConsoleOptions("test.dll", "-result:results.xml", "-noresult", "-result:nunit2results.xml;format=nunit2");
+            var options = ConsoleMocks.Options("test.dll", "-result:results.xml", "-noresult", "-result:nunit2results.xml;format=nunit2");
             Assert.That(options.ResultOutputSpecifications.Count, Is.EqualTo(0));
         }
 
         [Test]
         public void InvalidResultSpecRecordsError()
         {
-            var options = new ConsoleOptions("test.dll", "-result:userspecifed.xml;format=nunit2;format=nunit3");
+            var options = ConsoleMocks.Options("test.dll", "-result:userspecifed.xml;format=nunit2;format=nunit3");
             Assert.That(options.ResultOutputSpecifications, Has.Exactly(1).Items
                 .And.Exactly(1).Property(nameof(OutputSpecification.OutputPath)).EqualTo("TestResult.xml"));
             Assert.That(options.ErrorMessages, Has.Exactly(1).Contains("conflicting format options").IgnoreCase);
@@ -591,14 +563,10 @@ namespace NUnit.ConsoleRunner.Tests
             Assert.That(options.ErrorMessages, Has.Exactly(1).Contains($"{missingXslt} could not be found").IgnoreCase);
         }
 
-        #endregion
-
-        #region Explore Option
-
         [Test]
         public void ExploreOptionWithoutPath()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "-explore");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "-explore");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.Explore, Is.True);
         }
@@ -606,7 +574,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void ExploreOptionWithFilePath()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "-explore:results.xml");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "-explore:results.xml");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.InputFiles.Count, Is.EqualTo(1), "assembly should be set");
             Assert.That(options.InputFiles[0], Is.EqualTo("tests.dll"));
@@ -621,7 +589,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void ExploreOptionWithFilePathAndFormat()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "-explore:results.xml;format=cases");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "-explore:results.xml;format=cases");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.InputFiles.Count, Is.EqualTo(1), "assembly should be set");
             Assert.That(options.InputFiles[0], Is.EqualTo("tests.dll"));
@@ -657,7 +625,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void ExploreOptionWithFilePathUsingEqualSign()
         {
-            ConsoleOptions options = new ConsoleOptions("tests.dll", "-explore=C:/nunit/tests/bin/Debug/console-test.xml");
+            ConsoleOptions options = ConsoleMocks.Options("tests.dll", "-explore=C:/nunit/tests/bin/Debug/console-test.xml");
             Assert.That(options.Validate(), Is.True);
             Assert.That(options.Explore, Is.True);
             Assert.That(options.InputFiles.Count, Is.EqualTo(1), "assembly should be set");
@@ -688,7 +656,7 @@ namespace NUnit.ConsoleRunner.Tests
             }
             else
             {
-                options = new ConsoleOptions(args.ToArray());
+                options = ConsoleMocks.Options(args.ToArray());
             }
 
             // When
@@ -698,29 +666,21 @@ namespace NUnit.ConsoleRunner.Tests
             Assert.That(expectedTeamCity, Is.EqualTo(actualTeamCity));
         }
 
-        #endregion
-
-        #region Testlist Option
-
         [Test]
         public void ShouldNotFailOnEmptyLine()
         {
             var testListPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestListWithEmptyLine.tst");
             // Not copying this test file into releases
             Assume.That(testListPath, Does.Exist);
-            var options = new ConsoleOptions("--testlist=" + testListPath);
+            var options = ConsoleMocks.Options("--testlist=" + testListPath);
             Assert.That(options.ErrorMessages, Is.Empty);
             Assert.That(options.TestList, Is.EqualTo(new[] {"AmazingTest"}));
         }
 
-        #endregion
-
-        #region Test Parameters
-
         [Test]
         public void SingleDeprecatedTestParameter()
         {
-            var options = new ConsoleOptions("--params=X=5");
+            var options = ConsoleMocks.Options("--params=X=5");
             Assert.That(options.ErrorMessages, Is.Empty);
             Assert.That(options.WarningMessages, Has.One.Contains("deprecated").IgnoreCase);
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { { "X", "5" } }));
@@ -729,7 +689,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void TwoDeprecatedTestParametersInOneOption()
         {
-            var options = new ConsoleOptions("--params:X=5;Y=7");
+            var options = ConsoleMocks.Options("--params:X=5;Y=7");
             Assert.That(options.ErrorMessages, Is.Empty);
             Assert.That(options.WarningMessages, Has.One.Contains("deprecated").IgnoreCase);
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { { "X", "5" }, { "Y", "7" } }));
@@ -738,7 +698,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void TwoDeprecatedTestParametersInSeparateOptions()
         {
-            var options = new ConsoleOptions("-p:X=5", "-p:Y=7");
+            var options = ConsoleMocks.Options("-p:X=5", "-p:Y=7");
             Assert.That(options.ErrorMessages, Is.Empty);
             Assert.That(options.WarningMessages, Has.One.Contains("deprecated").IgnoreCase);
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { { "X", "5" }, { "Y", "7" } }));
@@ -747,7 +707,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void ThreeDeprecatedTestParametersInTwoOptions()
         {
-            var options = new ConsoleOptions("--params:X=5;Y=7", "-p:Z=3");
+            var options = ConsoleMocks.Options("--params:X=5;Y=7", "-p:Z=3");
             Assert.That(options.ErrorMessages, Is.Empty);
             Assert.That(options.WarningMessages, Has.One.Contains("deprecated").IgnoreCase);
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { { "X", "5" }, { "Y", "7" }, { "Z", "3" } }));
@@ -756,7 +716,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void DeprecatedParameterWithoutEqualSignIsInvalid()
         {
-            var options = new ConsoleOptions("--params=X5");
+            var options = ConsoleMocks.Options("--params=X5");
             Assert.That(options.WarningMessages, Has.One.Contains("deprecated").IgnoreCase);
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(1));
         }
@@ -764,7 +724,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void SingleTestParameter()
         {
-            var options = new ConsoleOptions("--testparam=X=5");
+            var options = ConsoleMocks.Options("--testparam=X=5");
             Assert.That(options.ErrorMessages, Is.Empty);
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { { "X", "5" } }));
         }
@@ -772,7 +732,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void SemicolonsDoNotSplitTestParameters()
         {
-            var options = new ConsoleOptions("--testparam:X=5;Y=7");
+            var options = ConsoleMocks.Options("--testparam:X=5;Y=7");
             Assert.That(options.ErrorMessages, Is.Empty);
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { { "X", "5;Y=7" } }));
         }
@@ -780,7 +740,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void TwoTestParametersInSeparateOptions()
         {
-            var options = new ConsoleOptions("--testparam:X=5", "--testparam:Y=7");
+            var options = ConsoleMocks.Options("--testparam:X=5", "--testparam:Y=7");
             Assert.That(options.ErrorMessages, Is.Empty);
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { { "X", "5" }, { "Y", "7" } }));
         }
@@ -788,21 +748,21 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void ParameterWithoutEqualSignIsInvalid()
         {
-            var options = new ConsoleOptions("--testparam=X5");
+            var options = ConsoleMocks.Options("--testparam=X5");
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(1));
         }
 
         [Test]
         public void ParameterWithMissingNameIsInvalid()
         {
-            var options = new ConsoleOptions("--testparam:=5");
+            var options = ConsoleMocks.Options("--testparam:=5");
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(1));
         }
 
         [Test]
         public void ParameterWithMissingValueIsInvalid()
         {
-            var options = new ConsoleOptions("--testparam:X=");
+            var options = ConsoleMocks.Options("--testparam:X=");
             Assert.That(options.ErrorMessages.Count, Is.EqualTo(1));
         }
 
@@ -814,7 +774,7 @@ namespace NUnit.ConsoleRunner.Tests
             // --testparams:"  X=5"
             // "--testparams:  X=5"
 
-            var options = new ConsoleOptions("--testparam:  X=5");
+            var options = ConsoleMocks.Options("--testparam:  X=5");
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { ["  X"] = "5" }));
         }
 
@@ -826,7 +786,7 @@ namespace NUnit.ConsoleRunner.Tests
             // --testparams:"X  =5"
             // "--testparams:X  =5"
 
-            var options = new ConsoleOptions("--testparam:X  =5");
+            var options = ConsoleMocks.Options("--testparam:X  =5");
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { ["X  "] = "5" }));
         }
 
@@ -838,7 +798,7 @@ namespace NUnit.ConsoleRunner.Tests
             // --testparams:"  =5"
             // "--testparams:  =5"
 
-            var options = new ConsoleOptions("--testparam:  =5");
+            var options = ConsoleMocks.Options("--testparam:  =5");
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { ["  "] = "5" }));
         }
 
@@ -850,7 +810,7 @@ namespace NUnit.ConsoleRunner.Tests
             // --testparams:"X=  5"
             // "--testparams:X=  5"
 
-            var options = new ConsoleOptions("--testparam:X=  5");
+            var options = ConsoleMocks.Options("--testparam:X=  5");
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { ["X"] = "  5" }));
         }
 
@@ -862,7 +822,7 @@ namespace NUnit.ConsoleRunner.Tests
             // --testparams:"X=5  "
             // "--testparams:X=5  "
 
-            var options = new ConsoleOptions("--testparam:X=5  ");
+            var options = ConsoleMocks.Options("--testparam:X=5  ");
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { ["X"] = "5  " }));
         }
 
@@ -874,7 +834,7 @@ namespace NUnit.ConsoleRunner.Tests
             // --testparams:"X=  "
             // "--testparams:X=  "
 
-            var options = new ConsoleOptions("--testparam:X=  ");
+            var options = ConsoleMocks.Options("--testparam:X=  ");
             Assert.That(options.TestParameters, Is.EqualTo(new Dictionary<string, string> { ["X"] = "  " }));
         }
 
@@ -892,10 +852,6 @@ namespace NUnit.ConsoleRunner.Tests
             foreach (var name in TestContext.Parameters.Names)
                 Console.WriteLine("   Name: {0} Value: {1}", name, TestContext.Parameters[name]);
         }
-
-        #endregion
-
-        #region Helper Methods
 
         private static IFileSystem GetFileSystemContainingFile(string fileName)
         {
@@ -917,8 +873,6 @@ namespace NUnit.ConsoleRunner.Tests
             Assert.IsNotNull(property, "The property '{0}' is not defined", propertyName);
             return property;
         }
-
-        #endregion
 
         internal sealed class DefaultOptionsProviderStub : IDefaultOptionsProvider
         {

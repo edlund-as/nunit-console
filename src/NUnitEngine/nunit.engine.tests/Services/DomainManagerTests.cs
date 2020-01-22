@@ -21,7 +21,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // ***********************************************************************
 
-#if !NETCOREAPP1_1 && !NETCOREAPP2_0
+#if !NETCOREAPP1_1 && !NETCOREAPP2_1
 using System;
 using System.IO;
 using NUnit.Framework;
@@ -111,8 +111,6 @@ namespace NUnit.Engine.Services.Tests
             CheckDomainIsUnloaded(domain);
         }
 
-        #region Helper Methods
-
         private void CheckDomainIsUnloaded(AppDomain domain)
         {
             // HACK: Either the Assert will succeed or the
@@ -130,8 +128,6 @@ namespace NUnit.Engine.Services.Tests
 
             Assert.That(unloaded, Is.True, "Domain was not unloaded");
         }
-
-        #endregion
     }
 }
 #endif

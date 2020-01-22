@@ -36,31 +36,8 @@ namespace NUnit.Engine
     /// program to interact with NUnit in order to explore,
     /// load and run tests.
     /// </summary>
-    public class TestEngine : ITestEngine
+    public class TestEngine : CoreEngine, ITestEngine
     {
-        public TestEngine()
-        {
-            Services = new ServiceContext();
-#if NETSTANDARD1_6
-            WorkDirectory = NUnitConfiguration.ApplicationDirectory;
-#else
-            WorkDirectory = Environment.CurrentDirectory;
-#endif
-            InternalTraceLevel = InternalTraceLevel.Default;
-        }
-
-        #region Public Properties
-
-        public ServiceContext Services { get; private set; }
-
-        public string WorkDirectory { get; set; }
-
-        public InternalTraceLevel InternalTraceLevel { get; set; }
-
-        #endregion
-
-        #region ITestEngine Members
-
         /// <summary>
         /// Access the public IServiceLocator, first initializing
         /// the services if that has not already been done.
@@ -102,7 +79,6 @@ namespace NUnit.Engine
                 // For example, ResultService uses ExtensionService, so ExtensionService is added
                 // later.
                 Services.Add(new SettingsService(true));
-                Services.Add(new DriverService());
                 Services.Add(new RecentFilesService());
                 Services.Add(new TestFilterService());
 #if !NETSTANDARD1_6
@@ -114,6 +90,7 @@ namespace NUnit.Engine
                 Services.Add(new TestAgency());
 #endif
 #endif
+                Services.Add(new DriverService());
                 Services.Add(new ResultService());
                 Services.Add(new DefaultTestRunnerFactory());
             }
@@ -134,31 +111,5 @@ namespace NUnit.Engine
 
             return new Runners.MasterTestRunner(Services, package);
         }
-
-        #endregion
-
-        #region IDisposable Members
-
-        private bool _disposed = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-            Services.ServiceManager.StopServices();
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                    Services.ServiceManager.Dispose();
-
-                _disposed = true;
-            }
-        }
-
-        #endregion
     }
 }

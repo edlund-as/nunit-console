@@ -40,8 +40,6 @@ namespace NUnit.ConsoleRunner
     /// </summary>
     public class ConsoleRunner
     {
-        #region Console Runner Return Codes
-
         public static readonly int OK = 0;
         public static readonly int INVALID_ARG = -1;
         public static readonly int INVALID_ASSEMBLY = -2;
@@ -49,10 +47,6 @@ namespace NUnit.ConsoleRunner
         public static readonly int INVALID_TEST_FIXTURE = -4;
         //public static readonly int UNLOAD_ERROR = -5;         //No longer in use
         public static readonly int UNEXPECTED_ERROR = -100;
-
-        #endregion
-
-        #region Instance Fields
 
         private ITestEngine _engine;
         private ConsoleOptions _options;
@@ -64,21 +58,15 @@ namespace NUnit.ConsoleRunner
 
         private string _workDirectory;
 
-        #endregion
-
-        #region Constructor
-
         public ConsoleRunner(ITestEngine engine, ConsoleOptions options, ExtendedTextWriter writer)
         {
             _engine = engine;
             _options = options;
             _outWriter = writer;
 
-            _workDirectory = options.WorkDirectory;
+            _workDirectory = options.WorkDirectory ?? Directory.GetCurrentDirectory();
 
-            if (_workDirectory == null)
-                _workDirectory = Environment.CurrentDirectory;
-            else if (!Directory.Exists(_workDirectory))
+            if (!Directory.Exists(_workDirectory))
                 Directory.CreateDirectory(_workDirectory);
 
             _resultService = _engine.Services.GetService<IResultService>();
@@ -86,12 +74,8 @@ namespace NUnit.ConsoleRunner
             _extensionService = _engine.Services.GetService<IExtensionService>();
 
             // Enable TeamCityEventListener immediately, before the console is redirected
-            _extensionService.EnableExtension("NUnit.Engine.Listeners.TeamCityEventListener", _options.TeamCity);
+            _extensionService?.EnableExtension("NUnit.Engine.Listeners.TeamCityEventListener", _options.TeamCity);
         }
-
-        #endregion
-
-        #region Execute Method
 
         /// <summary>
         /// Executes tests according to the provided commandline options.
@@ -138,10 +122,6 @@ namespace NUnit.ConsoleRunner
                 _outWriter.WriteLine(ColorStyle.Default, "    " + file);
             _outWriter.WriteLine();
         }
-
-        #endregion
-
-        #region Helper Methods
 
         private int ExploreTests(TestPackage package, TestFilter filter)
         {
@@ -191,7 +171,7 @@ namespace NUnit.ConsoleRunner
                     var outputDirectory = Path.GetDirectoryName(outputPath);
                     Directory.CreateDirectory(outputDirectory);
                 }
-                catch (SystemException ex)
+                catch (Exception ex)
                 {
                     writer.WriteLine(ColorStyle.Error, String.Format(
                         "The directory in --result {0} could not be created",
@@ -204,7 +184,7 @@ namespace NUnit.ConsoleRunner
                 {
                     resultWriter.CheckWritability(outputPath);
                 }
-                catch (SystemException ex)
+                catch (Exception ex)
                 {
                     throw new NUnitEngineException(
                         String.Format(
@@ -294,12 +274,19 @@ namespace NUnit.ConsoleRunner
         {
             OutWriter.WriteLine(ColorStyle.SectionHeader, "Runtime Environment");
             OutWriter.WriteLabelLine("   OS Version: ", GetOSVersion());
-            OutWriter.WriteLabelLine("  CLR Version: ", Environment.Version.ToString());
+#if NET20
+            OutWriter.WriteLabelLine("   Runtime: ", ".NET Framework CLR v" + Environment.Version.ToString());
+#else
+            OutWriter.WriteLabelLine("  Runtime: ", RuntimeInformation.FrameworkDescription);
+#endif
+
+
             OutWriter.WriteLine();
         }
 
         private static string GetOSVersion()
         {
+#if NET20
             OperatingSystem os = Environment.OSVersion;
             string osString = os.ToString();
             if (os.Platform == PlatformID.Unix)
@@ -316,6 +303,9 @@ namespace NUnit.ConsoleRunner
                 Marshal.FreeHGlobal(buf);
             }
             return osString;
+#else
+            return RuntimeInformation.OSDescription;
+#endif
         }
 
         [DllImport("libc")]
@@ -325,7 +315,7 @@ namespace NUnit.ConsoleRunner
         {
             _outWriter.WriteLine(ColorStyle.SectionHeader, "Installed Extensions");
 
-            foreach (var ep in _extensionService.ExtensionPoints)
+            foreach (var ep in _extensionService?.ExtensionPoints ?? new IExtensionPoint[0])
             {
                 _outWriter.WriteLabelLine("  Extension Point: ", ep.Path);
                 foreach (var node in ep.Extensions)
@@ -335,6 +325,13 @@ namespace NUnit.ConsoleRunner
                     if(node.TargetFramework != null)
                         _outWriter.Write(ColorStyle.Value, $"(.NET {node.TargetFramework?.FrameworkVersion})");
                     _outWriter.WriteLine(node.Enabled ? "" : " (Disabled)");
+
+                    _outWriter.Write("      Version: ");
+                    _outWriter.WriteLine(ColorStyle.Value, node.AssemblyVersion.ToString());
+
+                    _outWriter.Write("      Path: ");
+                    _outWriter.WriteLine(ColorStyle.Value, node.AssemblyPath);
+
                     foreach (var prop in node.PropertyNames)
                     {
                         _outWriter.Write("      " + prop + ":");
@@ -423,7 +420,7 @@ namespace NUnit.ConsoleRunner
                 package.AddSetting(EnginePackageSettings.ActiveConfig, options.ActiveConfig);
 
             // Always add work directory, in case current directory is changed
-            var workDirectory = options.WorkDirectory ?? Environment.CurrentDirectory;
+            var workDirectory = options.WorkDirectory ?? Directory.GetCurrentDirectory();
             package.AddSetting(FrameworkPackageSettings.WorkDirectory, workDirectory);
 
             if (options.StopOnError)
@@ -530,9 +527,6 @@ namespace NUnit.ConsoleRunner
 
             return true;
         }
-
-        #endregion
-
     }
 }
 
