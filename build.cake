@@ -9,7 +9,7 @@
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
-var productVersion = Argument("productVersion", "3.11.100");
+var productVersion = Argument("productVersion", "3.11.200");
 
 var ErrorDetail = new List<string>();
 bool IsDotNetCoreInstalled = false;
@@ -77,7 +77,7 @@ var EXTENSION_PACKAGES = new []
 {
   "NUnit.Extension.VSProjectLoader",
   "NUnit.Extension.NUnitProjectLoader",
-  "NUnit.Extension.NUnitV2Driver.Edlund",
+  "NUnit.Extension.NUnitV2Driver",
   "NUnit.Extension.NUnitV2ResultWriter",
   "NUnit.Extension.TeamCityEventListener",
   "Edlund.Batt.NUnitProgressAddin"
