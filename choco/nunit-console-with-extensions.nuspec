@@ -42,7 +42,7 @@
           <dependency id="nunit-extension-nunit-v2-result-writer" version="3.6.0" />
           <dependency id="nunit-extension-nunit-v2-driver" version="3.8.0" />
           <dependency id="nunit-extension-teamcity-event-listener" version="1.0.7" />
-          <dependency id="nunit-extension-batt-edlund" version="1.1.0" />
+          <dependency id="nunit-extension-batt-edlund" version="1.1.1" />
       </group>
     </dependencies>
   </metadata>

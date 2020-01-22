@@ -24,5 +24,5 @@
 using System.Reflection;
 
 [assembly: AssemblyProduct("NUnit Engine")]
-[assembly: AssemblyVersion("3.11.200")]
-[assembly: AssemblyInformationalVersion("3.11.200")]
+[assembly: AssemblyVersion("3.11.300")]
+[assembly: AssemblyInformationalVersion("3.11.300")]
